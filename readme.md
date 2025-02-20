@@ -40,3 +40,12 @@ $videoId = Storage::disk('bunny_stream')->put('abc.mp4', file_get_contents('abc.
  // Enable Direct File Access from Bunny to Access m3u8
 return response(Storage::disk('bunny_stream')->get("$videoId/playlist.m3u8"));
 ```
+
+### Extra Methods
+| Method                                    | Description                                                                                                                                                                                                |
+|-------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| get($path)                                | By default returns playlist.m3u8's content, but you can customize it by adding suffix like "$path/playlist.m3u8", "$path/play_240p.mp4" and more.                                                          |
+| getHls($path)                             | Returns playlist.m3u8's content, which would be the main entrypoint for any HLS player.                                                                                                                    |
+| getOriginal($path)                        | As the name suggests, it just returns the original file's content user had uploaded initially                                                                                                              |
+| getMp4($path, $quality = '240p,360p,etc') | Returns Mp4 file's content, $quality param allows you to customize which file you want, such `240p`, `360p`, `720p`, NOTE: all the quality might not be available depending on the Original file's quality |
+| getMp4($path, $quality = 'low,mid,high')  | Not recommended to be called in N+1 situation, as this requires API to resolve what resolution is the low, and what is high, mid, etc.                                                                     |
