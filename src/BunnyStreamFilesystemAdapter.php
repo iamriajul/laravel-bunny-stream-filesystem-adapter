@@ -101,13 +101,7 @@ class BunnyStreamFilesystemAdapter implements CloudFilesystemContract
 
     public function getVideo($videoId): array
     {
-        $video = json_decode(
-            $this->bunnyStreamAPI->getVideo($this->library_id, $videoId)
-                ->getBody()
-                ->getContents(),
-            true
-        );
-        return $video;
+        return $this->bunnyStreamAPI->getVideo($this->library_id, $videoId)->getContents();
     }
 
 
@@ -229,25 +223,19 @@ class BunnyStreamFilesystemAdapter implements CloudFilesystemContract
         $path = $this->normalizePathSlashes($path);
         $collectionId = null;
         if (!empty($path)) {
-            $collectionId = json_decode(
-                $this->bunnyStreamAPI->createCollection($this->library_id, [
-                    'name' => $path,
-                ])->getContents(),
-                true
-            )['guid'];
+            $collectionId = $this->bunnyStreamAPI->createCollection($this->library_id, [
+                'name' => $path,
+            ])->getContents()['guid'];
         }
 
-        $video = json_decode(
-            $this->bunnyStreamAPI->createVideo($this->library_id, array_merge(
-                [
-                    'title' => $name,
-                ],
-                $collectionId ? [
-                    'collectionId' => $collectionId,
-                ] : []
-            ))->getContents(),
-            true
-        );
+        $video = $this->bunnyStreamAPI->createVideo($this->library_id, array_merge(
+            [
+                'title' => $name,
+            ],
+            $collectionId ? [
+                'collectionId' => $collectionId,
+            ] : []
+        ))->getContents();
 
         $videoId = $video['guid'];
 
@@ -395,16 +383,13 @@ class BunnyStreamFilesystemAdapter implements CloudFilesystemContract
         if (empty($directory)) {
             return null;
         }
-        $existingCollections = json_decode(
-            $this->bunnyStreamAPI->listCollections(
-                $this->library_id,
-                [
-                    'search' => $path,
-                    'itemsPerPage' => 1000,
-                ]
-            )->getContents(),
-            true
-        )['items'];
+        $existingCollections = $this->bunnyStreamAPI->listCollections(
+            $this->library_id,
+            [
+                'search' => $path,
+                'itemsPerPage' => 1000,
+            ]
+        )->getContents()['items'];
         foreach ($existingCollections as $existingCollection) {
             if ($existingCollection['name'] === $path) {
                 return $existingCollection;
@@ -456,16 +441,13 @@ class BunnyStreamFilesystemAdapter implements CloudFilesystemContract
         $page = 1;
         while (true) {
             try {
-                $items = json_decode(
-                    $this->bunnyStreamAPI->listCollections(
-                        $this->library_id,
-                        [
-                            'itemsPerPage' => 1000,
-                            'page' => $page,
-                        ]
-                    )->getContents(),
-                    true
-                )['items'];
+                $items = $this->bunnyStreamAPI->listCollections(
+                    $this->library_id,
+                    [
+                        'itemsPerPage' => 1000,
+                        'page' => $page,
+                    ]
+                )->getContents()['items'];
 
                 // Increment the page number.
                 $page = $page + 1;
@@ -491,19 +473,16 @@ class BunnyStreamFilesystemAdapter implements CloudFilesystemContract
         $page = 1;
         while (true) {
             try {
-                $items = json_decode(
-                    $this->bunnyStreamAPI->listVideos(
-                        $this->library_id,
-                        array_merge(
-                            [
-                                'itemsPerPage' => 1000,
-                                'page' => $page,
-                            ],
-                            $collectionId ? ['collection' => $collectionId] : []
-                        )
-                    )->getContents(),
-                    true
-                )['items'];
+                $items = $this->bunnyStreamAPI->listVideos(
+                    $this->library_id,
+                    array_merge(
+                        [
+                            'itemsPerPage' => 1000,
+                            'page' => $page,
+                        ],
+                        $collectionId ? ['collection' => $collectionId] : []
+                    )
+                )->getContents()['items'];
 
                 // Increment the page number.
                 $page = $page + 1;
