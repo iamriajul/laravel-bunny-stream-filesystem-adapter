@@ -74,6 +74,18 @@ class BunnyStreamFilesystemAdapter implements CloudFilesystemContract
         return $path;
     }
 
+    private function stripFilenameFromPath($path)
+    {
+        if (is_null($path)) {
+            return null;
+        }
+        if (Str::contains(basename($path), '.')) {
+            // Most probably a file path.
+            return Str::beforeLast($path, '/');
+        }
+        return $path;
+    }
+
     private function createCdnRequest($path, string $method = 'GET', array $headers = [], $body = null): Request
     {
         return new Request(
@@ -211,6 +223,9 @@ class BunnyStreamFilesystemAdapter implements CloudFilesystemContract
 
     public function putFileAs($path, $file, $name = null, $options = [])
     {
+        // Filename is generated, So we don't use passed filename.
+        $path = $this->stripFilenameFromPath($path);
+        // Fix inconsistencies.
         $path = $this->normalizePathSlashes($path);
         $collectionId = null;
         if (!empty($path)) {
