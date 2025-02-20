@@ -2,6 +2,7 @@
 
 namespace Riajul\LaravelBunnyStream;
 
+use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 use Riajul\LaravelBunnyStream\Exceptions\InvalidArgumentException;
@@ -187,10 +188,92 @@ class BunnyStreamFilesystemAdapter implements CloudFilesystemContract
         }
     }
 
+    private function getContentsFromCdnUrl($path)
+    {
+        try {
+            return $this->guzzleClient->get("$this->cdnBaseUrl/$path", [
+                'headers' => [
+                    'Referer' => $this->cdnBaseUrl,
+                    'Accept' => '*/*',
+                    'AccessKey' => $this->api_key,
+                ]
+            ])->getBody()->getContents();
+        } catch (GuzzleException $e) {
+            return $this->guzzleClient->get("$this->cdnBaseUrl/$path", [
+                'headers' => [
+                    'Referer' => 'https://iframe.mediadelivery.net',
+                    'Accept' => '*/*',
+                    'AccessKey' => $this->api_key,
+                ]
+            ])->getBody()->getContents();
+        }
+    }
+
     public function get($path): ?string
     {
         $path = $this->toUsableFilePathForCdn($path, false);
-        return $this->guzzleClient->get("$this->cdnBaseUrl/$path")->getContents();
+        return $this->getContentsFromCdnUrl($path);
+    }
+
+    public function getHls($path): ?string
+    {
+        $videoId = $this->extractVideoIdFromPath($path);
+        return $this->getContentsFromCdnUrl("$videoId/playlist.m3u8");
+    }
+
+    public function getOriginal($path): ?string
+    {
+        $videoId = $this->extractVideoIdFromPath($path);
+        return $this->getContentsFromCdnUrl("$videoId/original");
+    }
+
+    public function getMp4($path, $quality): ?string
+    {
+        $videoId = $this->extractVideoIdFromPath($path);
+        if (preg_match("/[0-9]+p/", $quality)) {
+            return $this->getContentsFromCdnUrl("$videoId/play_$quality.mp4");
+        }
+
+        $video = $this->getVideo($videoId);
+
+        $resolutions = Arr::sort(
+            explode(',', $video['availableResolutions']),
+            function ($resolution) {
+                return (int) $resolution;
+            }
+        );
+
+        $resolution = null;
+        if ($quality == 'low' || $quality == 'lowest') {
+            $resolution = $resolutions[0];
+        }
+        if ($quality == 'mid' || $quality == 'medium') {
+            $resolution = $resolutions[round((count($resolutions) / 2) - 1)];
+        }
+        if ($quality == 'high' || $quality == 'highest') {
+            $resolution = $resolutions[count($resolutions) - 1];
+        }
+
+        if ($resolution) {
+            $quality = $resolution;
+        }
+
+        return $this->getContentsFromCdnUrl("$videoId/play_$quality.mp4");
+    }
+
+    public function getMp4Low($path)
+    {
+        return $this->getMp4($path, 'low');
+    }
+
+    public function getMp4Medium($path)
+    {
+        return $this->getMp4($path, 'medium');
+    }
+
+    public function getMp4High($path)
+    {
+        return $this->getMp4($path, 'high');
     }
 
     public function readStream($path)
@@ -234,9 +317,15 @@ class BunnyStreamFilesystemAdapter implements CloudFilesystemContract
         $path = $this->normalizePathSlashes($path);
         $collection = null;
         if (!empty($path)) {
-            $collection = $this->bunnyStreamAPI->createCollection($this->library_id, [
-                'name' => $path,
-            ])->getContents();
+            // Find existing collection.
+            $collection = $this->findDirectoryCollection($path);
+
+            // If not found create one.
+            if (empty($collection)) {
+                $collection = $this->bunnyStreamAPI->createCollection($this->library_id, [
+                    'name' => $path,
+                ])->getContents();
+            }
         }
 
         $video = $this->bunnyStreamAPI->createVideo($this->library_id, array_merge(
