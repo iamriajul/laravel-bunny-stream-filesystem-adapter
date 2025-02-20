@@ -1,0 +1,32 @@
+{
+    "name": "iamriajul/laravel-bunny-stream-filesystem-adapter",
+    "description": "Use Bunny Stream Filesystem Adapter for Laravel application",
+    "type": "library",
+    "require": {
+        "php": "^7.1|^8.0",
+        "ext-json": "*",
+        "illuminate/support": "^10.46|^11",
+        "illuminate/filesystem": "^10.46|^11",
+        "toshy/bunnynet-php": "^5.0",
+        "guzzlehttp/guzzle": "^7.9"
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Riajul\\LaravelBunnyStream\\BunnyStreamServiceProvider"
+            ]
+        }
+    },
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "Riajul\\LaravelBunnyStream\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "iamriajul",
+            "email": "kmriajulislami@gmail.com"
+        }
+    ]
+}
