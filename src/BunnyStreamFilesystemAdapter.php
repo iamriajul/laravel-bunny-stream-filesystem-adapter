@@ -232,19 +232,19 @@ class BunnyStreamFilesystemAdapter implements CloudFilesystemContract
         $path = $this->stripFilenameFromPath($path);
         // Fix inconsistencies.
         $path = $this->normalizePathSlashes($path);
-        $collectionId = null;
+        $collection = null;
         if (!empty($path)) {
-            $collectionId = $this->bunnyStreamAPI->createCollection($this->library_id, [
+            $collection = $this->bunnyStreamAPI->createCollection($this->library_id, [
                 'name' => $path,
-            ])->getContents()['guid'];
+            ])->getContents();
         }
 
         $video = $this->bunnyStreamAPI->createVideo($this->library_id, array_merge(
             [
                 'title' => $name,
             ],
-            $collectionId ? [
-                'collectionId' => $collectionId,
+            $collection ? [
+                'collectionId' => $collection['guid'],
             ] : []
         ))->getContents();
 
@@ -280,8 +280,8 @@ class BunnyStreamFilesystemAdapter implements CloudFilesystemContract
             fclose($resource);
         } catch (Throwable $e) {}
 
-        if ($collectionId) {
-            return "$collectionId/$videoId";
+        if ($collection) {
+            return $collection['name'] . "/$videoId";
         }
         return $videoId;
     }
