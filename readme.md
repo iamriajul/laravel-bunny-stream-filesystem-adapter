@@ -11,7 +11,7 @@ composer require iamriajul/laravel-bunny-stream
 
 ## Configuration
 
-This package automatically register the service provider and the storage disk for the driver `bunny`. You can configure the disk in `config/filesystems.php`:
+This package automatically register the service provider and the storage disk for the driver `bunny_stream`. You can configure the disk in `config/filesystems.php`:
 
 ```php
 'bunny_stream' => [

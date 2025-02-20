@@ -28,19 +28,19 @@ class BunnyStreamFilesystemAdapter implements CloudFilesystemContract
     private $library_id;
     private $api_key;
 
-    public $cdnBaseUrl;
+    private $cdnBaseUrl;
     /**
      * @var Guzzle
      */
-    public $guzzleClient;
+    private $guzzleClient;
     /**
      * @var BunnyClient
      */
-    public $bunnyClient;
+    private $bunnyClient;
     /**
      * @var StreamAPI
      */
-    public $bunnyStreamAPI;
+    private $bunnyStreamAPI;
 
     public function __construct(array $config)
     {
@@ -50,7 +50,7 @@ class BunnyStreamFilesystemAdapter implements CloudFilesystemContract
 
         $this->cdnBaseUrl = 'https://' . $this->hostname;
 
-        $this->guzzleClient = Http::buildClient();
+        $this->guzzleClient = new Guzzle();
 
         $this->bunnyClient = new BunnyClient($this->guzzleClient);
 
