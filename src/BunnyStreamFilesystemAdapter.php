@@ -183,7 +183,7 @@ class BunnyStreamFilesystemAdapter implements CloudFilesystemContract
     public function get($path): ?string
     {
         $path = $this->toUsableFilePathForCdn($path, false);
-        return $this->guzzleClient->get("$this->cdnBaseUrl/$path")->getBody()->getContents();
+        return $this->guzzleClient->get("$this->cdnBaseUrl/$path")->getContents();
     }
 
     public function readStream($path)
@@ -217,7 +217,7 @@ class BunnyStreamFilesystemAdapter implements CloudFilesystemContract
             $collectionId = json_decode(
                 $this->bunnyStreamAPI->createCollection($this->library_id, [
                     'name' => $path,
-                ])->getBody()->getContents(),
+                ])->getContents(),
                 true
             )['guid'];
         }
@@ -230,7 +230,7 @@ class BunnyStreamFilesystemAdapter implements CloudFilesystemContract
                 $collectionId ? [
                     'collectionId' => $collectionId,
                 ] : []
-            ))->getBody()->getContents(),
+            ))->getContents(),
             true
         );
 
@@ -259,7 +259,7 @@ class BunnyStreamFilesystemAdapter implements CloudFilesystemContract
             $resource = fopen($filePath, 'r');
         }
 
-        $this->bunnyStreamAPI->uploadVideo($this->library_id, $videoId, $resource)->getBody()->getContents();
+        $this->bunnyStreamAPI->uploadVideo($this->library_id, $videoId, $resource)->getContents();
 
         // close resource.
         fclose($resource);
@@ -387,7 +387,7 @@ class BunnyStreamFilesystemAdapter implements CloudFilesystemContract
                     'search' => $path,
                     'itemsPerPage' => 1000,
                 ]
-            )->getBody()->getContents(),
+            )->getContents(),
             true
         )['items'];
         foreach ($existingCollections as $existingCollection) {
@@ -448,7 +448,7 @@ class BunnyStreamFilesystemAdapter implements CloudFilesystemContract
                             'itemsPerPage' => 1000,
                             'page' => $page,
                         ]
-                    )->getBody()->getContents(),
+                    )->getContents(),
                     true
                 )['items'];
 
@@ -486,7 +486,7 @@ class BunnyStreamFilesystemAdapter implements CloudFilesystemContract
                             ],
                             $collectionId ? ['collection' => $collectionId] : []
                         )
-                    )->getBody()->getContents(),
+                    )->getContents(),
                     true
                 )['items'];
 
