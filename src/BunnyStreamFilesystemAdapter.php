@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Traits\Conditionable;
 use Illuminate\Support\Traits\Macroable;
 use SplFileInfo;
+use Throwable;
 use ToshY\BunnyNet\Client\BunnyClient;
 use ToshY\BunnyNet\StreamAPI;
 
@@ -181,7 +182,7 @@ class BunnyStreamFilesystemAdapter implements CloudFilesystemContract
         try {
             $videoId = $this->extractVideoIdFromPath($path);
             return !!@$this->getVideo($videoId)['guid'];
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             return false;
         }
     }
@@ -203,7 +204,12 @@ class BunnyStreamFilesystemAdapter implements CloudFilesystemContract
 
     public function put($path, $contents, $options = [])
     {
-        return $this->putFileAs($path, $contents, "doesn't matter", $options);
+        $name = basename($path);
+        if (!Str::contains($path, '.')) {
+            $name = null;
+        }
+
+        return $this->putFileAs($path, $contents, $name, $options);
     }
 
     public function putFile($path, $file = null, $options = [])
@@ -212,7 +218,12 @@ class BunnyStreamFilesystemAdapter implements CloudFilesystemContract
             [$path, $file, $options] = ['', $path, $file ?? []];
         }
 
-        return $this->putFileAs($path, $file, "doesn't matter", $options);
+        $name = basename($path);
+        if (!Str::contains($path, '.')) {
+            $name = null;
+        }
+
+        return $this->putFileAs($path, $file, $name, $options);
     }
 
     public function putFileAs($path, $file, $name = null, $options = [])
@@ -264,8 +275,10 @@ class BunnyStreamFilesystemAdapter implements CloudFilesystemContract
 
         $this->bunnyStreamAPI->uploadVideo($this->library_id, $videoId, $resource)->getContents();
 
-        // close resource.
-        fclose($resource);
+        try {
+            // close resource.
+            fclose($resource);
+        } catch (Throwable $e) {}
 
         if ($collectionId) {
             return "$collectionId/$videoId";
@@ -460,7 +473,7 @@ class BunnyStreamFilesystemAdapter implements CloudFilesystemContract
                 foreach ($items as $item) {
                     $collections[] = $item;
                 }
-            } catch (\Throwable $e) {
+            } catch (Throwable $e) {
                 break;
             }
         }
@@ -495,7 +508,7 @@ class BunnyStreamFilesystemAdapter implements CloudFilesystemContract
                 foreach ($items as $item) {
                     $videos[] = $item;
                 }
-            } catch (\Throwable $e) {
+            } catch (Throwable $e) {
                 break;
             }
         }
