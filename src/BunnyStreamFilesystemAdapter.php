@@ -341,7 +341,7 @@ class BunnyStreamFilesystemAdapter implements CloudFilesystemContract
 
         $video = $this->bunnyStreamAPI->createVideo($this->library_id, array_merge(
             [
-                'title' => $name,
+                'title' => $name ?? 'default',
             ],
             $collection ? [
                 'collectionId' => $collection['guid'],
