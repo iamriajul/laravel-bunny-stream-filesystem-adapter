@@ -201,13 +201,17 @@ class BunnyStreamFilesystemAdapter implements CloudFilesystemContract
                 ]
             ])->getBody()->getContents();
         } catch (GuzzleException $e) {
-            return $this->guzzleClient->get("$this->cdnBaseUrl/$path", [
-                'headers' => [
-                    'Referer' => 'https://iframe.mediadelivery.net',
-                    'Accept' => '*/*',
-                    'AccessKey' => $this->api_key,
-                ]
-            ])->getBody()->getContents();
+            try {
+                return $this->guzzleClient->get("$this->cdnBaseUrl/$path", [
+                    'headers' => [
+                        'Referer' => 'https://iframe.mediadelivery.net',
+                        'Accept' => '*/*',
+                        'AccessKey' => $this->api_key,
+                    ]
+                ])->getBody()->getContents();
+            } catch (GuzzleException $e) {
+                return null;
+            }
         }
     }
 
