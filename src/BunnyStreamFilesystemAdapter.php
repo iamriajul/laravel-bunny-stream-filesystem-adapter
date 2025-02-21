@@ -3,8 +3,10 @@
 namespace Riajul\LaravelBunnyStream;
 
 use GuzzleHttp\Exception\GuzzleException;
+use GuzzleHttp\Psr7\Stream;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
+use Psr\Http\Message\StreamInterface;
 use Riajul\LaravelBunnyStream\Exceptions\InvalidArgumentException;
 use Riajul\LaravelBunnyStream\Exceptions\InvalidFileContentException;
 use Riajul\LaravelBunnyStream\Exceptions\UnsupportedFeatureMethodCallException;
@@ -339,40 +341,39 @@ class BunnyStreamFilesystemAdapter implements CloudFilesystemContract
 
         $videoId = $video['guid'];
 
-        $filePath = null;
-        if ($file instanceof SplFileInfo) {
-            $filePath = $file->getRealPath();
-        } else if (is_string($file) && file_exists($file)) {
-            $filePath = realpath($file);
-        }
-
+        $stream = null;
         $resource = null;
-        if (!$filePath) {
-            if (is_resource($file)) {
-                $resource = $file;
-            } else if (is_string($file)) {
-                $tmpFile = tmpfile();
-                fwrite($tmpFile, $file);
-                rewind($tmpFile);
-                $resource = $tmpFile;
-            } else {
-                throw new InvalidFileContentException('Invalid file content type');
+        if ($file instanceof StreamInterface) {
+            $stream = $file;
+        } else if (is_resource($file)) {
+            $resource = $file;
+        } if ($file instanceof SplFileInfo) {
+            $resource = fopen($file->getRealPath(), 'r');
+        } else if (is_string($file) && file_exists($file)) {
+            $resource = fopen(realpath($file), 'r');
+        }
+
+        $status = $this->bunnyStreamAPI->uploadVideo(
+            $this->library_id,
+            $videoId,
+                $stream ?? $resource ?? $file
+        )->getStatusCode();
+
+        if ($resource) {
+            try {
+                // close resource.
+                fclose($resource);
+            } catch (Throwable $e) {}
+        }
+
+        if ($status >= 200 && $status < 300) {
+            if ($collection) {
+                return $collection['name'] . "/$videoId";
             }
-        } else {
-            $resource = fopen($filePath, 'r');
+            return $videoId;
         }
 
-        $this->bunnyStreamAPI->uploadVideo($this->library_id, $videoId, $resource)->getContents();
-
-        try {
-            // close resource.
-            fclose($resource);
-        } catch (Throwable $e) {}
-
-        if ($collection) {
-            return $collection['name'] . "/$videoId";
-        }
-        return $videoId;
+        return false;
     }
 
     public function writeStream($path, $resource, array $options = [])
