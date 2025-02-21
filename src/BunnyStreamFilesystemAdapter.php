@@ -96,6 +96,7 @@ class BunnyStreamFilesystemAdapter implements CloudFilesystemContract
             $method,
             "$this->cdnBaseUrl/$path",
             array_merge([
+                'Referer' => $this->cdnBaseUrl,
                 'Accept' => '*/*',
                 'AccessKey' => $this->api_key,
             ], $headers),
@@ -107,7 +108,6 @@ class BunnyStreamFilesystemAdapter implements CloudFilesystemContract
     {
         return $this->bunnyStreamAPI->getVideo($this->library_id, $videoId)->getContents();
     }
-
 
     private function extractVideoIdFromPath($path)
     {
@@ -285,6 +285,15 @@ class BunnyStreamFilesystemAdapter implements CloudFilesystemContract
             $this->createCdnRequest($path),
             ['stream' => true]
         )->getBody()->detach();
+    }
+
+    public function getStream($path)
+    {
+        $path = $this->toUsableFilePathForCdn($path, false);
+        return $this->guzzleClient->send(
+            $this->createCdnRequest($path),
+            ['stream' => true]
+        )->getBody();
     }
 
     public function put($path, $contents, $options = [])
