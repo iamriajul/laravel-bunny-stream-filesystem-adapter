@@ -5,8 +5,8 @@
     "require": {
         "php": "^7.1|^8.0",
         "ext-json": "*",
-        "illuminate/support": "^10.46|^11",
-        "illuminate/filesystem": "^10.46|^11",
+        "illuminate/support": "^10.46|^11|^12",
+        "illuminate/filesystem": "^10.46|^11|^12",
         "toshy/bunnynet-php": "^5.0",
         "guzzlehttp/guzzle": "^7.9"
     },
